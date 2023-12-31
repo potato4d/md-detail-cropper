@@ -10,3 +10,42 @@ html.dark {
   @apply bg-gray-900;
   @apply text-white;
 }
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0.0;
+  }
+  100% {
+    opacity: 1.0;
+  }
+}
+
+@keyframes slideOut {
+  0% {
+    opacity: 1.0;
+    transform: translateY(0px);
+  }
+  100% {
+    opacity: 0.0;
+    transform: translateY(15px);
+  }
+}
+
+@keyframes slideIn {
+  0% {
+    opacity: 0.0;
+    transform: translateY(-15px);
+  }
+  100% {
+    opacity: 1.0;
+    transform: translateY(0px);
+  }
+}
+
+.generated-image {
+  animation: fadeIn 0.15s ease-out forwards;
+}
+
+.download-button:hover svg {
+  animation: slideOut 0.15s ease-out forwards, slideIn 0.15s 0.30s ease-out forwards;
+}

@@ -6,6 +6,6 @@ export const BASE_SIZE = {
     left: 176,
     top: 224,
     width: 596,
-    height: 868
-  }
+    height: 868,
+  },
 } as const;
