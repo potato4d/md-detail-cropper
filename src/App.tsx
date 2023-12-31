@@ -154,7 +154,7 @@ const App: React.FC = () => {
               <img
                 src={fullImageUrl || ""}
                 className={clsx([
-                  "rounded overflow-hidden transition-opacity duration-300 relative z-20",
+                  "rounded overflow-hidden transition-opacity duration-300 relative z-20 w-full h-full object-cover",
                   fullImageUrl ? "opacity-100" : "opacity-0",
                 ])}
                 alt=""
