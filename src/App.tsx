@@ -9,6 +9,7 @@ import {
   MoonIcon,
   SunIcon,
 } from "./FeatherIcons";
+import { Logo } from "./Logo";
 
 function drawRoundedRect(
   context: CanvasRenderingContext2D,
@@ -64,11 +65,34 @@ const App: React.FC = () => {
           return;
         }
 
-        // 縦横比が 16:9 でない場合は、横幅を維持したまま、下が残るようにクロップしたデータを生成する。correctionedImage という名前で格納する。
-        const RATIO = image.width / BASE_SIZE.width;
-        console.log({
-          RATIO,
-        });
+        const copiedImage = document.createElement("canvas");
+        const copiedContext = copiedImage.getContext("2d");
+
+        if (!copiedContext) {
+          return;
+        }
+
+        if (image.height / image.width < 0.56) {
+          copiedImage.height = image.height;
+          copiedImage.width = image.height / 9 * 16;
+          copiedContext.drawImage(
+            image,
+            (image.width - copiedImage.width) / 2,
+            0 + (26 * copiedImage.width / BASE_SIZE.width),
+            copiedImage.width,
+            copiedImage.height,
+            0,
+            0,
+            copiedImage.width,
+            copiedImage.height,
+          );
+        } else {
+          copiedImage.width = image.width;
+          copiedImage.height = image.height;
+          copiedContext.drawImage(image, 0, 0);
+        }
+
+        const RATIO = copiedImage.width / BASE_SIZE.width;
         canvas.width = BASE_SIZE.crop.width * RATIO;
         canvas.height = BASE_SIZE.crop.height * RATIO;
 
@@ -86,9 +110,9 @@ const App: React.FC = () => {
         context.fillStyle = "rgba(255,255,255,0)";
         context.fillRect(0, 0, canvas.width, canvas.height);
         context.drawImage(
-          image,
+          copiedImage,
           176 * RATIO,
-          image.height - 1216 * RATIO,
+          copiedImage.height - 1216 * RATIO,
           596 * RATIO,
           869 * RATIO,
           0 * RATIO,
@@ -120,7 +144,10 @@ const App: React.FC = () => {
     <div className="container max-w-screen-md mx-auto py-8 flex flex-col gap-6">
       <div className="font-bold text-center flex items-center justify-between">
         <div className="flex flex-col gap-2 justify-start items-start">
-          <h1 className="text-2xl">MDCardCropper</h1>
+          <h1 className={clsx([
+            "text-2xl flex items-center justify-start gap-1",
+            colorScheme === 'light' ? 'text-gray-800' : 'text-white'
+          ])}><Logo className="w-8 h-8" />MDCardCropper</h1>
           <p className="text-xs font-normal">
             マスターデュエルカード画像クロップツール
           </p>
@@ -234,8 +261,8 @@ const App: React.FC = () => {
           </p>
         </div>
         <ul className="flex gap-4 flex-nowrap">
-          {generatedImageURLs.map((url, index) => (
-            <li key={index} className="generated-image">
+          {generatedImageURLs.map((url) => (
+            <li key={url} className="generated-image">
               <a
                 className="w-20 h-[116px] relative block leading-none"
                 href={url}
@@ -261,14 +288,12 @@ const App: React.FC = () => {
           このツールについて
         </h2>
         <p className="text-sm leading-loose">
-          マスターデュエルのカード詳細画面のスクリーンショットから、カード画像を切り抜くためのツールです。
-          <br />
-          ひとまず正式にサポートしているのは Steam 版のみとなりますが、16:9
-          で撮影されたスクリーンショットであれば、解像度に依存せず自動的に切り抜きます。
+          マスターデュエルのカード詳細画面のスクリーンショットから、カード画像を切り抜くためのツールです。<br />
+          現状正式サポートは Steam 版のみとなりますが、スマートフォン版でもある程度の精度で切り抜くことが可能です。もしうまく動作しない場合、スクリーンショットを添えて <a href="https://x.com/potato4d" target="_blank" className="underline">@potato4d</a> までご連絡ください。
         </p>
       </section>
 
-      <section className="text-right flex justify-end items-end">
+      <section className="text-right flex justify-end items-end h-5">
         <a
           href="https://twitter.com/share?ref_src=twsrc%5Etfw"
           className="twitter-share-button text-sm"
@@ -278,11 +303,18 @@ const App: React.FC = () => {
         </a>
       </section>
 
+      <details className="text-sm">
+        <summary className="mb-4">
+          <h2 className="inline-flex cursor-pointer font-bold text-gray-800 dark:text-gray-50 gap-2 items-center justify-start">更新情報</h2>
+        </summary>
+        <ul className="list-disc list-inside flex flex-col gap-2">
+          <li>2024/01/01: 試験版となる v0.1.0 をリリースしました。</li>
+        </ul>
+      </details>
+
       <footer className="text-center text-sm">
-        &copy; 2024{" "}
-        <a href="https://x.com/potato4d" className="underline">
-          @potato4d
-        </a>
+        &copy;{" "}2024{" "}
+        @potato4d
       </footer>
     </div>
   );

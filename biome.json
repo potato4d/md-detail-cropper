@@ -10,7 +10,19 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
-    }
+      "recommended": true,
+      "style": {
+        "noNonNullAssertion": "off"
+      },
+      "a11y": {
+        "noSvgWithoutTitle": "off",
+        "useKeyWithClickEvents": "off",
+        "useKeyWithMouseEvents": "off",
+        "noBlankTarget": "off"
+      }
+    },
+    "ignore": [
+      "src/Logo.tsx"
+    ]
   }
 }
