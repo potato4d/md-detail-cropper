@@ -140,6 +140,13 @@ const App: React.FC = () => {
     anchor.click();
   }, [croppedImageURL]);
 
+  const handleClickGeneratedImageDownload = useCallback((e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+    e.preventDefault();
+    const anchor = e.currentTarget.cloneNode(true) as HTMLAnchorElement;
+    anchor.download = `cropped_${dayjs().format("YYYYMMDD_HHmmss")}.png`;
+    anchor.click();
+  }, []);
+
   return (
     <div className="container max-w-screen-md mx-auto py-8 flex flex-col gap-6">
       <div className="font-bold text-center flex items-center justify-between">
@@ -154,7 +161,7 @@ const App: React.FC = () => {
             MDCardCropper
           </h1>
           <p className="text-xs font-normal">
-            マスターデュエルカード画像クロップツール
+            マスターデュエルのカード画像の切り抜きをワンアクションでできる便利ツールです。
           </p>
         </div>
         <button
@@ -268,10 +275,12 @@ const App: React.FC = () => {
         <ul className="flex gap-4 flex-nowrap">
           {generatedImageURLs.map((url) => (
             <li key={url} className="generated-image shadow-xl">
+              {/* biome-ignore lint/a11y/useValidAnchor: <explanation> */}
               <a
                 className="w-20 h-[116px] relative block leading-none rounded-sm overflow-hidden"
                 href={url}
                 target="_blank"
+                onClick={handleClickGeneratedImageDownload}
               >
                 <img src={url} className="rounded-sm overflow-hidden" alt="" />
                 <div className="generated-image-shadow opacity-0 transition-opacity duration-200 ease-out absolute left-0 top-0 w-full h-full bg-[#00000066] text-white flex items-center justify-center">

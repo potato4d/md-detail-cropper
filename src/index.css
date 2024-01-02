@@ -61,3 +61,27 @@ html.dark {
 .generated-image:hover a svg {
   transform: translateY(-5px);
 }
+
+
+.generated-image a::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,.3) 100%);
+  transform: skewX(-25deg);
+  z-index: 20;
+}
+
+.generated-image:hover a::before {
+  animation: shine 0.55s forwards;
+}
+
+
+@keyframes shine {
+  100% {
+    left: 125%;
+  }
+}
