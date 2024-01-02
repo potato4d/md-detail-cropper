@@ -49,3 +49,15 @@ html.dark {
 .download-button:hover svg {
   animation: slideOut 0.15s ease-out forwards, slideIn 0.15s 0.30s ease-out forwards;
 }
+
+.generated-image:hover .generated-image-shadow {
+  opacity: 1.0;
+}
+
+.generated-image a svg {
+  transform: translateY(-15px);
+}
+
+.generated-image:hover a svg {
+  transform: translateY(-5px);
+}

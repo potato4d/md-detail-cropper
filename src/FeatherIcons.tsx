@@ -1,4 +1,8 @@
-export const DownloadIcon: React.FC = () => (
+import clsx from "clsx";
+
+export const DownloadIcon: React.FC<{ className?: string }> = ({
+  className,
+}) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="24"
@@ -9,7 +13,7 @@ export const DownloadIcon: React.FC = () => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className="feather feather-arrow-down-circle w-4 h-4"
+    className={clsx(["feather feather-arrow-down-circle w-4 h-4", className])}
   >
     <circle cx="12" cy="12" r="10" />
     <polyline points="8 12 12 16 16 12" />
@@ -93,7 +97,7 @@ export const InfoIcon: React.FC = () => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className="feather feather-info w-4 h-4"
+    className="feather feather-info w-5 h-5 shadow-sm"
   >
     <circle cx="12" cy="12" r="10" />
     <line x1="12" y1="16" x2="12" y2="12" />

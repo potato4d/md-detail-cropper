@@ -74,11 +74,11 @@ const App: React.FC = () => {
 
         if (image.height / image.width < 0.56) {
           copiedImage.height = image.height;
-          copiedImage.width = image.height / 9 * 16;
+          copiedImage.width = (image.height / 9) * 16;
           copiedContext.drawImage(
             image,
             (image.width - copiedImage.width) / 2,
-            0 + (26 * copiedImage.width / BASE_SIZE.width),
+            0 + (26 * copiedImage.width) / BASE_SIZE.width,
             copiedImage.width,
             copiedImage.height,
             0,
@@ -144,10 +144,15 @@ const App: React.FC = () => {
     <div className="container max-w-screen-md mx-auto py-8 flex flex-col gap-6">
       <div className="font-bold text-center flex items-center justify-between">
         <div className="flex flex-col gap-2 justify-start items-start">
-          <h1 className={clsx([
-            "text-2xl flex items-center justify-start gap-1",
-            colorScheme === 'light' ? 'text-gray-800' : 'text-white'
-          ])}><Logo className="w-8 h-8" />MDCardCropper</h1>
+          <h1
+            className={clsx([
+              "text-2xl flex items-center justify-start gap-1",
+              colorScheme === "light" ? "text-gray-800" : "text-white",
+            ])}
+          >
+            <Logo className="w-8 h-8" />
+            MDCardCropper
+          </h1>
           <p className="text-xs font-normal">
             マスターデュエルカード画像クロップツール
           </p>
@@ -177,7 +182,7 @@ const App: React.FC = () => {
             onInput={handleChangeFile}
           />
           {
-            <div className="w-[576px] h-[324px] relative z-10">
+            <div className="w-[576px] h-[324px] relative z-10 shadow-md shadow-blue-50 dark:shadow-gray-900">
               <img
                 src={fullImageUrl || ""}
                 className={clsx([
@@ -190,8 +195,8 @@ const App: React.FC = () => {
                 className={clsx(
                   "absolute left-0 top-0 w-full h-full rounded overflow-hidden text-lg flex flex-col items-center justify-center gap-2 leading-none",
                   fullImageUrl
-                    ? "bg-gray-600 dark:bg-gray-200"
-                    : "bg-gray-200 dark:bg-gray-600",
+                    ? "bg-gray-500 dark:bg-gray-200"
+                    : "bg-gray-200 dark:bg-gray-500",
                 )}
               >
                 {!fullImageUrl && (
@@ -212,7 +217,7 @@ const App: React.FC = () => {
         <div className="flex-1">
           <div className="flex flex-col gap-4">
             <div className="w-full">
-              <div className="w-[176px] h-[257px] relative">
+              <div className="w-[176px] h-[257px] relative shadow-md shadow-blue-50 dark:shadow-gray-900">
                 <img
                   src={croppedImageURL || ""}
                   onClick={() => {
@@ -234,7 +239,7 @@ const App: React.FC = () => {
                 />
               </div>
             </div>
-            <div className="mt-[2px]">
+            <div className="mt-[2px] shadow-md shadow-blue-50 dark:shadow-gray-900">
               <button
                 type="button"
                 onClick={handleClickDownload}
@@ -262,13 +267,16 @@ const App: React.FC = () => {
         </div>
         <ul className="flex gap-4 flex-nowrap">
           {generatedImageURLs.map((url) => (
-            <li key={url} className="generated-image">
+            <li key={url} className="generated-image shadow-xl">
               <a
-                className="w-20 h-[116px] relative block leading-none"
+                className="w-20 h-[116px] relative block leading-none rounded-sm overflow-hidden"
                 href={url}
                 target="_blank"
               >
                 <img src={url} className="rounded-sm overflow-hidden" alt="" />
+                <div className="generated-image-shadow opacity-0 transition-opacity duration-200 ease-out absolute left-0 top-0 w-full h-full bg-[#00000066] text-white flex items-center justify-center">
+                  <DownloadIcon className="text-white w-6 h-6 transition-transform duration-200 ease-out" />
+                </div>
               </a>
             </li>
           ))}
@@ -282,14 +290,24 @@ const App: React.FC = () => {
         </ul>
       </section>
 
-      <section className="bg-gray-100 dark:bg-gray-700 rounded p-6 flex flex-col gap-4">
-        <h2 className="font-bold text-gray-800 dark:text-gray-50 flex gap-2 items-center justify-start">
+      <section className="bg-gray-100 dark:bg-gray-700 rounded p-6 flex flex-col gap-4 shadow-md shadow-blue-50 dark:shadow-gray-900">
+        <h2 className="font-bold text-lg text-gray-800 dark:text-gray-50 flex gap-1.5 items-center justify-start">
           <InfoIcon />
           このツールについて
         </h2>
         <p className="text-sm leading-loose">
-          マスターデュエルのカード詳細画面のスクリーンショットから、カード画像を切り抜くためのツールです。<br />
-          現状正式サポートは Steam 版のみとなりますが、スマートフォン版でもある程度の精度で切り抜くことが可能です。もしうまく動作しない場合、スクリーンショットを添えて <a href="https://x.com/potato4d" target="_blank" className="underline">@potato4d</a> までご連絡ください。
+          マスターデュエルのカード詳細画面のスクリーンショットから、カード画像を切り抜くためのツールです。
+          <br />
+          現状正式サポートは Steam
+          版のみとなりますが、スマートフォン版でもある程度の精度で切り抜くことが可能です。もしうまく動作しない場合、スクリーンショットを添えて{" "}
+          <a
+            href="https://x.com/potato4d"
+            target="_blank"
+            className="underline"
+          >
+            @potato4d
+          </a>{" "}
+          までご連絡ください。
         </p>
       </section>
 
@@ -305,17 +323,16 @@ const App: React.FC = () => {
 
       <details className="text-sm">
         <summary className="mb-4">
-          <h2 className="inline-flex cursor-pointer font-bold text-gray-800 dark:text-gray-50 gap-2 items-center justify-start">更新情報</h2>
+          <h2 className="inline-flex cursor-pointer font-bold text-gray-800 dark:text-gray-50 gap-2 items-center justify-start">
+            更新情報
+          </h2>
         </summary>
         <ul className="list-disc list-inside flex flex-col gap-2">
           <li>2024/01/01: 試験版となる v0.1.0 をリリースしました。</li>
         </ul>
       </details>
 
-      <footer className="text-center text-sm">
-        &copy;{" "}2024{" "}
-        @potato4d
-      </footer>
+      <footer className="text-center text-sm">&copy; 2024 @potato4d</footer>
     </div>
   );
 };
