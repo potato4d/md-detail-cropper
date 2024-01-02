@@ -182,7 +182,7 @@ const App: React.FC = () => {
             onInput={handleChangeFile}
           />
           {
-            <div className="w-[576px] h-[324px] relative z-10 shadow-md shadow-blue-50 dark:shadow-gray-900">
+            <div className="w-[576px] h-[324px] relative z-10 transition-all duration-300 ease-out shadow-md shadow-blue-50 dark:shadow-gray-900">
               <img
                 src={fullImageUrl || ""}
                 className={clsx([
@@ -217,7 +217,7 @@ const App: React.FC = () => {
         <div className="flex-1">
           <div className="flex flex-col gap-4">
             <div className="w-full">
-              <div className="w-[176px] h-[257px] relative shadow-md shadow-blue-50 dark:shadow-gray-900">
+              <div className="w-[176px] h-[257px] relative transition-all duration-300 ease-out shadow-md shadow-blue-50 dark:shadow-gray-900">
                 <img
                   src={croppedImageURL || ""}
                   onClick={() => {
@@ -239,7 +239,7 @@ const App: React.FC = () => {
                 />
               </div>
             </div>
-            <div className="mt-[2px] shadow-md shadow-blue-50 dark:shadow-gray-900">
+            <div className="mt-[2px] transition-all duration-300 ease-out shadow-md shadow-blue-50 dark:shadow-gray-900">
               <button
                 type="button"
                 onClick={handleClickDownload}
@@ -262,7 +262,7 @@ const App: React.FC = () => {
         <div className="flex flex-col gap-2">
           <h2 className="font-bold">クロップ履歴</h2>
           <p className="text-xs">
-            まとまった画像が必要な場合は、一通り切り抜いてからダウンロードすると便利です。再読込でクリアされます。
+            まとまった画像が必要な場合は、ひと通り切り抜いてからダウンロードすると便利です。再読み込みでクリアされます。
           </p>
         </div>
         <ul className="flex gap-4 flex-nowrap">
@@ -290,7 +290,7 @@ const App: React.FC = () => {
         </ul>
       </section>
 
-      <section className="bg-gray-100 dark:bg-gray-700 rounded p-6 flex flex-col gap-4 shadow-md shadow-blue-50 dark:shadow-gray-900">
+      <section className="bg-gray-100 dark:bg-gray-700 rounded p-6 flex flex-col gap-4 transition-all duration-300 ease-out shadow-md shadow-blue-50 dark:shadow-gray-900">
         <h2 className="font-bold text-lg text-gray-800 dark:text-gray-50 flex gap-1.5 items-center justify-start">
           <InfoIcon />
           このツールについて
