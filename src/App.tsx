@@ -47,88 +47,95 @@ const App: React.FC = () => {
   const [generatedImageURLs, setGeneratedImageURLs] = useState<string[]>([]);
 
   const handleChangeFile = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
       if (!e.target.files) {
         return;
       }
-      const [file] = e.target.files;
-      if (!file) {
+      if (!e.target.files.length) {
         return;
       }
-      const canvas = document.createElement("canvas");
-      const context = canvas.getContext("2d");
-      const image = new Image();
-      image.src = URL.createObjectURL(file);
-      setFullImageUrl(image.src);
-      image.onload = () => {
-        if (!context) {
-          return;
-        }
-
-        const copiedImage = document.createElement("canvas");
-        const copiedContext = copiedImage.getContext("2d");
-
-        if (!copiedContext) {
-          return;
-        }
-
-        if (image.height / image.width < 0.56) {
-          copiedImage.height = image.height;
-          copiedImage.width = (image.height / 9) * 16;
-          copiedContext.drawImage(
-            image,
-            (image.width - copiedImage.width) / 2,
-            0 + (26 * copiedImage.width) / BASE_SIZE.width,
-            copiedImage.width,
-            copiedImage.height,
-            0,
-            0,
-            copiedImage.width,
-            copiedImage.height,
-          );
-        } else {
-          copiedImage.width = image.width;
-          copiedImage.height = image.height;
-          copiedContext.drawImage(image, 0, 0);
-        }
-
-        const RATIO = copiedImage.width / BASE_SIZE.width;
-        canvas.width = BASE_SIZE.crop.width * RATIO;
-        canvas.height = BASE_SIZE.crop.height * RATIO;
-
-        context.fillStyle = "rgba(255,255,255,0)";
-        context.fillRect(0, 0, canvas.width, canvas.height);
-
-        drawRoundedRect(
-          context,
-          0,
-          0,
-          canvas.width,
-          canvas.height,
-          ROUND_SIZE * RATIO,
-        );
-        context.fillStyle = "rgba(255,255,255,0)";
-        context.fillRect(0, 0, canvas.width, canvas.height);
-        context.drawImage(
-          copiedImage,
-          176 * RATIO,
-          copiedImage.height - 1216 * RATIO,
-          596 * RATIO,
-          869 * RATIO,
-          0 * RATIO,
-          0 * RATIO,
-          596 * RATIO,
-          869 * RATIO,
-        );
-
-        canvas.toBlob((blob) => {
-          if (!blob) {
-            return;
+      const result = await Promise.all(Array.from(e.target.files).map((file) => {
+        return new Promise<string>((resolve, reject) => {
+          if (!file) {
+            return reject();
           }
-          setCroppedImageURL(URL.createObjectURL(blob));
-          setGeneratedImageURLs((prev) => [URL.createObjectURL(blob), ...prev]);
-        });
-      };
+          const canvas = document.createElement("canvas");
+          const context = canvas.getContext("2d");
+          const image = new Image();
+          image.src = URL.createObjectURL(file);
+          setFullImageUrl(image.src);
+          image.onload = () => {
+            if (!context) {
+              return;
+            }
+
+            const copiedImage = document.createElement("canvas");
+            const copiedContext = copiedImage.getContext("2d");
+
+            if (!copiedContext) {
+              return;
+            }
+
+            if (image.height / image.width < 0.56) {
+              copiedImage.height = image.height;
+              copiedImage.width = (image.height / 9) * 16;
+              copiedContext.drawImage(
+                image,
+                (image.width - copiedImage.width) / 2,
+                0 + (26 * copiedImage.width) / BASE_SIZE.width,
+                copiedImage.width,
+                copiedImage.height,
+                0,
+                0,
+                copiedImage.width,
+                copiedImage.height,
+              );
+            } else {
+              copiedImage.width = image.width;
+              copiedImage.height = image.height;
+              copiedContext.drawImage(image, 0, 0);
+            }
+
+            const RATIO = copiedImage.width / BASE_SIZE.width;
+            canvas.width = BASE_SIZE.crop.width * RATIO;
+            canvas.height = BASE_SIZE.crop.height * RATIO;
+
+            context.fillStyle = "rgba(255,255,255,0)";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            drawRoundedRect(
+              context,
+              0,
+              0,
+              canvas.width,
+              canvas.height,
+              ROUND_SIZE * RATIO,
+            );
+            context.fillStyle = "rgba(255,255,255,0)";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(
+              copiedImage,
+              176 * RATIO,
+              copiedImage.height - 1216 * RATIO,
+              596 * RATIO,
+              869 * RATIO,
+              0 * RATIO,
+              0 * RATIO,
+              596 * RATIO,
+              869 * RATIO,
+            );
+
+            canvas.toBlob((blob) => {
+              if (!blob) {
+                return;
+              }
+              resolve(URL.createObjectURL(blob));
+            });
+          }
+        })
+      }));
+      setCroppedImageURL(result[result.length - 1] as string);
+      setGeneratedImageURLs((prev) => [...result, ...prev]);
     },
     [],
   );
@@ -185,6 +192,7 @@ const App: React.FC = () => {
         <div className="relative w-3/4">
           <input
             type="file"
+            multiple={true}
             className="absolute left-0 top-0 w-full h-full opacity-0 z-20 cursor-pointer"
             onInput={handleChangeFile}
           />
@@ -337,6 +345,7 @@ const App: React.FC = () => {
           </h2>
         </summary>
         <ul className="list-disc list-inside flex flex-col gap-2">
+          <li>2024/02/15: 複数画像のまとめてのクロップに対応しました。</li>
           <li>2024/01/01: 試験版となる v0.1.0 をリリースしました。</li>
         </ul>
       </details>
