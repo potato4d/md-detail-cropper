@@ -188,8 +188,8 @@ const App: React.FC = () => {
         </button>
       </div>
 
-      <div className="flex gap-4">
-        <div className="relative w-3/4">
+      <div className="flex gap-4 flex-col md:flex-row">
+        <div className="relative w-full md:w-3/4">
           <input
             type="file"
             multiple={true}
@@ -197,7 +197,7 @@ const App: React.FC = () => {
             onInput={handleChangeFile}
           />
           {
-            <div className="w-[576px] h-[324px] relative z-10 transition-all duration-300 ease-out shadow-md shadow-blue-50 dark:shadow-gray-900">
+            <div className="w-full md:w-[576px] h-[56.25vw] md:h-[324px] relative z-10 transition-all duration-300 ease-out shadow-md shadow-blue-50 dark:shadow-gray-900">
               <img
                 src={fullImageUrl || ""}
                 className={clsx([
