@@ -62,7 +62,6 @@ html.dark {
   transform: translateY(-5px);
 }
 
-
 .generated-image a::before {
   content: '';
   position: absolute;

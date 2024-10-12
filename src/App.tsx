@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ROUND_SIZE, BASE_SIZE } from "./utils/constants";
 import clsx from "clsx";
 import {
@@ -38,6 +38,81 @@ function drawRoundedRect(
   context.clip();
 }
 
+async function cropImage(image: HTMLImageElement): Promise<string> {
+  return new Promise((resolve) => {
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    image.onload = () => {
+      if (!context) {
+        return;
+      }
+
+      const copiedImage = document.createElement("canvas");
+      const copiedContext = copiedImage.getContext("2d");
+
+      if (!copiedContext) {
+        return;
+      }
+
+      if (image.height / image.width < 0.56) {
+        copiedImage.height = image.height;
+        copiedImage.width = (image.height / 9) * 16;
+        copiedContext.drawImage(
+          image,
+          (image.width - copiedImage.width) / 2,
+          0 + (26 * copiedImage.width) / BASE_SIZE.width,
+          copiedImage.width,
+          copiedImage.height,
+          0,
+          0,
+          copiedImage.width,
+          copiedImage.height,
+        );
+      } else {
+        copiedImage.width = image.width;
+        copiedImage.height = image.height;
+        copiedContext.drawImage(image, 0, 0);
+      }
+
+      const RATIO = copiedImage.width / BASE_SIZE.width;
+      canvas.width = BASE_SIZE.crop.width * RATIO;
+      canvas.height = BASE_SIZE.crop.height * RATIO;
+
+      context.fillStyle = "rgba(255,255,255,0)";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawRoundedRect(
+        context,
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+        ROUND_SIZE * RATIO,
+      );
+      context.fillStyle = "rgba(255,255,255,0)";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(
+        copiedImage,
+        176 * RATIO,
+        copiedImage.height - 1216 * RATIO,
+        596 * RATIO,
+        869 * RATIO,
+        0 * RATIO,
+        0 * RATIO,
+        596 * RATIO,
+        869 * RATIO,
+      );
+
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          return;
+        }
+        resolve(URL.createObjectURL(blob));
+      });
+    }
+  })
+}
+
 const App: React.FC = () => {
   const [colorScheme, setColorScheme] = useState<"light" | "dark">(
     (localStorage.getItem("theme") as "light" | "dark" | null) || "light",
@@ -45,6 +120,39 @@ const App: React.FC = () => {
   const [fullImageUrl, setFullImageUrl] = useState<string>("");
   const [croppedImageURL, setCroppedImageURL] = useState<string>("");
   const [generatedImageURLs, setGeneratedImageURLs] = useState<string[]>([]);
+
+  useEffect(() => {
+    async function onPaste(event: ClipboardEvent) {
+      const items = event.clipboardData?.items;
+      const imageUrls: string[] = [];
+      if (!items || items.length === 0) {
+        return;
+      }
+
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const blob = item.getAsFile(); // Blob オブジェクトとして画像を取得
+          if(!blob) {
+            continue;
+          }
+          imageUrls.push(URL.createObjectURL(blob));
+        }
+      }
+      const result = await Promise.all(imageUrls.map(async (url) => {
+        const image = new Image();
+        image.src = url;
+        setFullImageUrl(image.src);
+        const croppedUrl = await cropImage(image);
+        return croppedUrl;
+      }));
+      setCroppedImageURL(result[result.length - 1] as string);
+      setGeneratedImageURLs((prev) => [...result, ...prev]);
+    }
+    document.addEventListener('paste', onPaste);
+    return () => {
+      document.removeEventListener('paste', onPaste);
+    }
+  }, []);
 
   const handleChangeFile = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,79 +167,11 @@ const App: React.FC = () => {
           if (!file) {
             return reject();
           }
-          const canvas = document.createElement("canvas");
-          const context = canvas.getContext("2d");
           const image = new Image();
           image.src = URL.createObjectURL(file);
           setFullImageUrl(image.src);
-          image.onload = () => {
-            if (!context) {
-              return;
-            }
-
-            const copiedImage = document.createElement("canvas");
-            const copiedContext = copiedImage.getContext("2d");
-
-            if (!copiedContext) {
-              return;
-            }
-
-            if (image.height / image.width < 0.56) {
-              copiedImage.height = image.height;
-              copiedImage.width = (image.height / 9) * 16;
-              copiedContext.drawImage(
-                image,
-                (image.width - copiedImage.width) / 2,
-                0 + (26 * copiedImage.width) / BASE_SIZE.width,
-                copiedImage.width,
-                copiedImage.height,
-                0,
-                0,
-                copiedImage.width,
-                copiedImage.height,
-              );
-            } else {
-              copiedImage.width = image.width;
-              copiedImage.height = image.height;
-              copiedContext.drawImage(image, 0, 0);
-            }
-
-            const RATIO = copiedImage.width / BASE_SIZE.width;
-            canvas.width = BASE_SIZE.crop.width * RATIO;
-            canvas.height = BASE_SIZE.crop.height * RATIO;
-
-            context.fillStyle = "rgba(255,255,255,0)";
-            context.fillRect(0, 0, canvas.width, canvas.height);
-
-            drawRoundedRect(
-              context,
-              0,
-              0,
-              canvas.width,
-              canvas.height,
-              ROUND_SIZE * RATIO,
-            );
-            context.fillStyle = "rgba(255,255,255,0)";
-            context.fillRect(0, 0, canvas.width, canvas.height);
-            context.drawImage(
-              copiedImage,
-              176 * RATIO,
-              copiedImage.height - 1216 * RATIO,
-              596 * RATIO,
-              869 * RATIO,
-              0 * RATIO,
-              0 * RATIO,
-              596 * RATIO,
-              869 * RATIO,
-            );
-
-            canvas.toBlob((blob) => {
-              if (!blob) {
-                return;
-              }
-              resolve(URL.createObjectURL(blob));
-            });
-          }
+          cropImage(image)
+          .then((url) => resolve(url))
         })
       }));
       setCroppedImageURL(result[result.length - 1] as string);
@@ -334,7 +374,7 @@ const App: React.FC = () => {
           className="twitter-share-button text-sm"
           data-show-count="false"
         >
-          Tweet
+          <span className="hidden">Post</span>
         </a>
       </section>
 
@@ -345,6 +385,7 @@ const App: React.FC = () => {
           </h2>
         </summary>
         <ul className="list-disc list-inside flex flex-col gap-2">
+          <li>2024/10/12: クリップボードからの貼り付けに対応しました。</li>
           <li>2024/02/15: 複数画像のまとめてのクロップに対応しました。</li>
           <li>2024/01/01: 試験版となる v0.1.0 をリリースしました。</li>
         </ul>
