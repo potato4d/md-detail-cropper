@@ -11,17 +11,17 @@ export const Logo: React.FC<{ className: string }> = ({ className }) => (
     <g
       id="Artboard"
       stroke="none"
-      stroke-width="1"
+      strokeWidth="1"
       fill="none"
-      fill-rule="evenodd"
+      fillRule="evenodd"
     >
       <g id="Group" transform="translate(20, 8)" stroke="currentColor">
         <g
           id="scissors"
           transform="translate(13, 24)"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="5.29411765"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="5.29411765"
         >
           <ellipse
             id="Oval"
@@ -61,8 +61,8 @@ export const Logo: React.FC<{ className: string }> = ({ className }) => (
         </g>
         <rect
           id="Rectangle"
-          stroke-width="6"
-          fill-opacity="0"
+          strokeWidth="6"
+          fillOpacity="0"
           fill="#FFFFFF"
           x="0"
           y="0"

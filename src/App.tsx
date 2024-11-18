@@ -196,7 +196,7 @@ const App: React.FC = () => {
 
   return (
     <div className="container max-w-screen-md mx-auto py-8 flex flex-col gap-6">
-      <div className="font-bold text-center flex items-center justify-between">
+      <div className="relative font-bold text-center flex items-start md:items-center justify-between mx-4 md:mx-0">
         <div className="flex flex-col gap-2 justify-start items-start">
           <h1
             className={clsx([
@@ -208,12 +208,12 @@ const App: React.FC = () => {
             MDCardCropper
           </h1>
           <p className="text-xs font-normal">
-            マスターデュエルのカード画像の切り抜きをワンアクションでできる便利ツールです。
+            マスターデュエルのカード画像をワンタップでお手軽切り抜き
           </p>
         </div>
         <button
           type="button"
-          className="leading-none appearance-none"
+          className="leading-none appearance-none absolute md:relative right-0 md:right-auto top-0 md:top-auto"
           onClick={() => {
             setColorScheme(colorScheme === "light" ? "dark" : "light");
             localStorage.setItem(
@@ -228,7 +228,7 @@ const App: React.FC = () => {
         </button>
       </div>
 
-      <div className="flex gap-4 flex-col md:flex-row">
+      <div className="flex gap-4 flex-col md:flex-row mx-4 md:mx-0">
         <div className="relative w-full md:w-3/4">
           <input
             type="file"
@@ -270,9 +270,9 @@ const App: React.FC = () => {
           }
         </div>
         <div className="flex-1">
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-0 md:gap-4">
             <div className="w-full">
-              <div className="w-[176px] h-[257px] relative transition-all duration-300 ease-out shadow-md shadow-blue-50 dark:shadow-gray-900">
+              <div className="hidden md:block w-[176px] h-[257px] relative transition-all duration-300 ease-out shadow-md shadow-blue-50 dark:shadow-gray-900">
                 <img
                   src={croppedImageURL || ""}
                   onClick={() => {
@@ -314,13 +314,13 @@ const App: React.FC = () => {
       </div>
 
       <section className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 mx-4 md:mx-0">
           <h2 className="font-bold">クロップ履歴</h2>
           <p className="text-xs">
             まとまった画像が必要な場合は、ひと通り切り抜いてからダウンロードすると便利です。再読み込みでクリアされます。
           </p>
         </div>
-        <ul className="flex gap-4 flex-nowrap">
+        <ul className="mx-4 flex gap-4 flex-nowrap">
           {generatedImageURLs.map((url) => (
             <li key={url} className="generated-image shadow-xl">
               {/* biome-ignore lint/a11y/useValidAnchor: <explanation> */}
@@ -347,7 +347,7 @@ const App: React.FC = () => {
         </ul>
       </section>
 
-      <section className="bg-gray-100 dark:bg-gray-700 rounded p-6 flex flex-col gap-4 transition-all duration-300 ease-out shadow-md shadow-blue-50 dark:shadow-gray-900">
+      <section className="mx-4 md:mx-0 bg-gray-100 dark:bg-gray-700 rounded p-6 flex flex-col gap-4 transition-all duration-300 ease-out shadow-md shadow-blue-50 dark:shadow-gray-900">
         <h2 className="font-bold text-lg text-gray-800 dark:text-gray-50 flex gap-1.5 items-center justify-start">
           <InfoIcon />
           このツールについて
@@ -355,8 +355,7 @@ const App: React.FC = () => {
         <p className="text-sm leading-loose">
           マスターデュエルのカード詳細画面のスクリーンショットから、カード画像を切り抜くためのツールです。
           <br />
-          現状正式サポートは Steam
-          版のみとなりますが、スマートフォン版でもある程度の精度で切り抜くことが可能です。もしうまく動作しない場合、スクリーンショットを添えて{" "}
+          現状正式サポートは Steam 並びにスマートフォン版となります。もしうまく動作しない場合、スクリーンショットを添えて{" "}
           <a
             href="https://x.com/potato4d"
             target="_blank"
@@ -368,7 +367,7 @@ const App: React.FC = () => {
         </p>
       </section>
 
-      <section className="text-right flex justify-end items-end h-5">
+      <section className="text-right flex justify-end items-end h-5 mx-4 md:mx-0">
         <a
           href="https://twitter.com/share?ref_src=twsrc%5Etfw"
           className="twitter-share-button text-sm"
@@ -378,13 +377,14 @@ const App: React.FC = () => {
         </a>
       </section>
 
-      <details className="text-sm">
+      <details className="text-sm mx-4 md:mx-0">
         <summary className="mb-4">
           <h2 className="inline-flex cursor-pointer font-bold text-gray-800 dark:text-gray-50 gap-2 items-center justify-start">
             更新情報
           </h2>
         </summary>
         <ul className="list-disc list-inside flex flex-col gap-2">
+          <li>2024/10/28: スマートフォンにもデザインを最適化しました。</li>
           <li>2024/10/12: クリップボードからの貼り付けに対応しました。</li>
           <li>2024/02/15: 複数画像のまとめてのクロップに対応しました。</li>
           <li>2024/01/01: 試験版となる v0.1.0 をリリースしました。</li>
