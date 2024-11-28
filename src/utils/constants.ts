@@ -8,4 +8,10 @@ export const BASE_SIZE = {
     width: 596,
     height: 868,
   },
+  largeCrop: {
+    left: 833,
+    top: 69,
+    width: 894,
+    height: 1303
+  }
 } as const;

@@ -39,10 +39,11 @@ function drawRoundedRect(
   context.clip();
 }
 
-async function cropImage(image: HTMLImageElement): Promise<string> {
+async function cropImage(image: HTMLImageElement, isLargeImage: boolean): Promise<string> {
   return new Promise((resolve) => {
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d");
+    const CROP_SIZE = isLargeImage ? BASE_SIZE.largeCrop : BASE_SIZE.crop;
     image.onload = () => {
       if (!context) {
         return;
@@ -56,6 +57,7 @@ async function cropImage(image: HTMLImageElement): Promise<string> {
       }
 
       if (image.height / image.width < 0.56) {
+        // 16:9 よりも縦長の画像の場合
         copiedImage.height = image.height;
         copiedImage.width = (image.height / 9) * 16;
         copiedContext.drawImage(
@@ -70,14 +72,15 @@ async function cropImage(image: HTMLImageElement): Promise<string> {
           copiedImage.height,
         );
       } else {
+        // 16:9 以下の画像の場合
         copiedImage.width = image.width;
         copiedImage.height = image.height;
         copiedContext.drawImage(image, 0, 0);
       }
 
       const RATIO = copiedImage.width / BASE_SIZE.width;
-      canvas.width = BASE_SIZE.crop.width * RATIO;
-      canvas.height = BASE_SIZE.crop.height * RATIO;
+      canvas.width = CROP_SIZE.width * RATIO;
+      canvas.height = CROP_SIZE.height * RATIO;
 
       context.fillStyle = "rgba(255,255,255,0)";
       context.fillRect(0, 0, canvas.width, canvas.height);
@@ -94,14 +97,16 @@ async function cropImage(image: HTMLImageElement): Promise<string> {
       context.fillRect(0, 0, canvas.width, canvas.height);
       context.drawImage(
         copiedImage,
-        176 * RATIO,
-        copiedImage.height - 1216 * RATIO,
-        596 * RATIO,
-        869 * RATIO,
+        CROP_SIZE.left * RATIO,
+
+        // マジックナンバーなので治す(座標データ)
+        copiedImage.height - (isLargeImage ? 1372 : 1216) * RATIO,
+        CROP_SIZE.width * RATIO,
+        CROP_SIZE.height * RATIO,
         0 * RATIO,
         0 * RATIO,
-        596 * RATIO,
-        869 * RATIO,
+        CROP_SIZE.width * RATIO,
+        CROP_SIZE.height * RATIO,
       );
 
       canvas.toBlob((blob) => {
@@ -121,6 +126,7 @@ const App: React.FC = () => {
   const [fullImageUrl, setFullImageUrl] = useState<string>("");
   const [croppedImageURL, setCroppedImageURL] = useState<string>("");
   const [generatedImageURLs, setGeneratedImageURLs] = useState<string[]>([]);
+  const [isLargeImage, setIsLargeImage] = useState<boolean>(false);
 
   useEffect(() => {
     async function onPaste(event: ClipboardEvent) {
@@ -143,7 +149,7 @@ const App: React.FC = () => {
         const image = new Image();
         image.src = url;
         setFullImageUrl(image.src);
-        const croppedUrl = await cropImage(image);
+        const croppedUrl = await cropImage(image, isLargeImage);
         return croppedUrl;
       }));
       setCroppedImageURL(result[result.length - 1] as string);
@@ -153,7 +159,7 @@ const App: React.FC = () => {
     return () => {
       document.removeEventListener('paste', onPaste);
     }
-  }, []);
+  }, [isLargeImage]);
 
   const handleChangeFile = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -171,14 +177,14 @@ const App: React.FC = () => {
           const image = new Image();
           image.src = URL.createObjectURL(file);
           setFullImageUrl(image.src);
-          cropImage(image)
+          cropImage(image, isLargeImage)
             .then((url) => resolve(url))
         })
       }));
       setCroppedImageURL(result[result.length - 1] as string);
       setGeneratedImageURLs((prev) => [...result, ...prev]);
     },
-    [],
+    [isLargeImage],
   );
 
   const handleClickDownload = useCallback(() => {
@@ -187,6 +193,15 @@ const App: React.FC = () => {
     anchor.download = `cropped_${dayjs().format("YYYYMMDD_HHmmss")}.png`;
     anchor.click();
   }, [croppedImageURL]);
+
+  const handleClickDownloadAll = useCallback(() => {
+    generatedImageURLs.forEach((url: string, i) => {
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `cropped_${dayjs().format("YYYYMMDD_HHmmss")}_${i + 1}.png`;
+      anchor.click();
+    });
+  }, [generatedImageURLs]);
 
   const handleClickGeneratedImageDownload = useCallback((e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
     e.preventDefault();
@@ -314,18 +329,18 @@ const App: React.FC = () => {
             </div>
           </div>
         </div>
-        {/*
-          <div className="text-xs flex justify-between items-center">
-            <div className="font-bold flex gap-1 items-center justify-start">
-              <CogIcon className="w-3 h-3" />
-              切り抜きオプション
-              </div>
-            <label className="flex gap-1">
-              <input type="checkbox" />
-              <span>拡大画像をクロップ</span>
-            </label>
+        <div className="text-xs flex justify-between items-center mr-1">
+          <div className="font-bold flex gap-1 items-center justify-start">
+            <CogIcon className="w-3 h-3" />
+            切り抜きオプション
           </div>
-         */}
+          <label className="flex gap-1">
+            <input type="checkbox" onInput={(event) => {
+              setIsLargeImage(event.currentTarget.checked);
+            }} />
+            <span>拡大画像をクロップ β(Steam版のみ対応)</span>
+          </label>
+        </div>
       </div>
 
       <section className="flex flex-col gap-4">
@@ -360,6 +375,27 @@ const App: React.FC = () => {
             </li>
           )}
         </ul>
+        {
+          generatedImageURLs.length > 0 ? (
+            <div className="flex justify-end items-center mx-4 lg:mx-2">
+              <button
+                type="button"
+                onClick={handleClickDownloadAll}
+                className={clsx([
+                  "download-button leading-none py-2 flex items-center justify-center h-12 px-4 rounded appearance-none transition-all  text-white font-bold",
+                  croppedImageURL
+                    ? "bg-blue-500 hover:bg-blue-600"
+                    : "pointer-events-none user-select-none bg-gray-300 dark:bg-gray-800 cursor-not-allowed",
+                ])}
+              >
+                <DownloadIcon />
+                <span className="inline-block ml-1">Download All</span>
+              </button>
+            </div>
+          ) : (
+            <div className="w-full h-12" />
+          )
+        }
       </section>
 
       <section className="mx-4 md:mx-0 bg-gray-100 dark:bg-gray-700 rounded p-6 flex flex-col gap-4 transition-all duration-300 ease-out shadow-md shadow-blue-50 dark:shadow-gray-900">
