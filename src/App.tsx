@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ROUND_SIZE, BASE_SIZE } from "./utils/constants";
 import clsx from "clsx";
 import {
+  CogIcon,
   DownloadIcon,
   ImageIcon,
   InfoIcon,
@@ -132,7 +133,7 @@ const App: React.FC = () => {
       for (const item of items) {
         if (item.type.startsWith('image/')) {
           const blob = item.getAsFile(); // Blob オブジェクトとして画像を取得
-          if(!blob) {
+          if (!blob) {
             continue;
           }
           imageUrls.push(URL.createObjectURL(blob));
@@ -171,7 +172,7 @@ const App: React.FC = () => {
           image.src = URL.createObjectURL(file);
           setFullImageUrl(image.src);
           cropImage(image)
-          .then((url) => resolve(url))
+            .then((url) => resolve(url))
         })
       }));
       setCroppedImageURL(result[result.length - 1] as string);
@@ -228,89 +229,103 @@ const App: React.FC = () => {
         </button>
       </div>
 
-      <div className="flex gap-4 flex-col md:flex-row mx-4 md:mx-0">
-        <div className="relative w-full md:w-3/4">
-          <input
-            type="file"
-            multiple={true}
-            className="absolute left-0 top-0 w-full h-full opacity-0 z-20 cursor-pointer"
-            onInput={handleChangeFile}
-          />
-          {
-            <div className="w-full md:w-[576px] h-[56.25vw] md:h-[324px] relative z-10 transition-all duration-300 ease-out shadow-md shadow-blue-50 dark:shadow-gray-900">
-              <img
-                src={fullImageUrl || ""}
-                className={clsx([
-                  "rounded overflow-hidden transition-opacity duration-300 relative z-20 w-full h-full object-cover",
-                  fullImageUrl ? "opacity-100" : "opacity-0",
-                ])}
-                alt=""
-              />
-              <div
-                className={clsx(
-                  "absolute left-0 top-0 w-full h-full rounded overflow-hidden text-lg flex flex-col items-center justify-center gap-2 leading-none",
-                  fullImageUrl
-                    ? "bg-gray-500 dark:bg-gray-200"
-                    : "bg-gray-200 dark:bg-gray-500",
-                )}
-              >
-                {!fullImageUrl && (
-                  <>
-                    <ImageIcon />
-                    <span className="block text-lg font-bold mt-2">
-                      ここに画像をドラッグ&ドロップ
-                    </span>
-                    <span className="block text-sm">
-                      またはクリックでファイルを選択
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
-          }
-        </div>
-        <div className="flex-1">
-          <div className="flex flex-col gap-0 md:gap-4">
-            <div className="w-full">
-              <div className="hidden md:block w-[176px] h-[257px] relative transition-all duration-300 ease-out shadow-md shadow-blue-50 dark:shadow-gray-900">
+      <div className="flex flex-col gap-2">
+        <div className="flex gap-4 flex-col md:flex-row mx-4 md:mx-0">
+          <div className="relative w-full md:w-3/4">
+            <input
+              type="file"
+              multiple={true}
+              className="absolute left-0 top-0 w-full h-full opacity-0 z-20 cursor-pointer"
+              onInput={handleChangeFile}
+            />
+            {
+              <div className="w-full md:w-[576px] h-[56.25vw] md:h-[324px] relative z-10 transition-all duration-300 ease-out shadow-md shadow-blue-50 dark:shadow-gray-900">
                 <img
-                  src={croppedImageURL || ""}
-                  onClick={() => {
-                    window.open(croppedImageURL);
-                  }}
+                  src={fullImageUrl || ""}
                   className={clsx([
-                    "rounded overflow-hidden transition-opacity duration-300 relative z-20 cursor-pointer",
+                    "rounded overflow-hidden transition-opacity duration-300 relative z-20 w-full h-full object-cover",
                     fullImageUrl ? "opacity-100" : "opacity-0",
                   ])}
                   alt=""
                 />
                 <div
-                  className={clsx([
-                    "absolute left-0 top-0 w-full h-full rounded overflow-hidden text-lg flex flex-col items-center justify-center gap-2",
-                    croppedImageURL
-                      ? "bg-gray-600 dark:bg-gray-200"
-                      : "bg-gray-200 dark:bg-gray-600",
-                  ])}
-                />
+                  className={clsx(
+                    "absolute left-0 top-0 w-full h-full rounded overflow-hidden text-lg flex flex-col items-center justify-center gap-2 leading-none",
+                    fullImageUrl
+                      ? "bg-gray-500 dark:bg-gray-200"
+                      : "bg-gray-200 dark:bg-gray-500",
+                  )}
+                >
+                  {!fullImageUrl && (
+                    <>
+                      <ImageIcon />
+                      <span className="block text-lg font-bold mt-2">
+                        ここに画像をドラッグ&ドロップ
+                      </span>
+                      <span className="block text-sm">
+                        またはクリックでファイルを選択
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="mt-[2px] transition-all duration-300 ease-out shadow-md shadow-blue-50 dark:shadow-gray-900">
-              <button
-                type="button"
-                onClick={handleClickDownload}
-                className={clsx([
-                  "download-button leading-none py-2 w-full flex items-center justify-center h-12 px-4 rounded appearance-none transition-all  text-white font-bold",
-                  croppedImageURL
-                    ? "bg-blue-500 hover:bg-blue-600"
-                    : "pointer-events-none user-select-none bg-gray-300 dark:bg-gray-800 cursor-not-allowed",
-                ])}
-              >
-                <DownloadIcon />
-                <span className="inline-block ml-1">Download</span>
-              </button>
+            }
+          </div>
+          <div className="flex-1">
+            <div className="flex flex-col gap-0 md:gap-4">
+              <div className="w-full">
+                <div className="hidden md:block w-[176px] h-[257px] relative transition-all duration-300 ease-out shadow-md shadow-blue-50 dark:shadow-gray-900">
+                  <img
+                    src={croppedImageURL || ""}
+                    onClick={() => {
+                      window.open(croppedImageURL);
+                    }}
+                    className={clsx([
+                      "rounded overflow-hidden transition-opacity duration-300 relative z-20 cursor-pointer",
+                      fullImageUrl ? "opacity-100" : "opacity-0",
+                    ])}
+                    alt=""
+                  />
+                  <div
+                    className={clsx([
+                      "absolute left-0 top-0 w-full h-full rounded overflow-hidden text-lg flex flex-col items-center justify-center gap-2",
+                      croppedImageURL
+                        ? "bg-gray-600 dark:bg-gray-200"
+                        : "bg-gray-200 dark:bg-gray-600",
+                    ])}
+                  />
+                </div>
+              </div>
+              <div className="mt-[2px] transition-all duration-300 ease-out shadow-md shadow-blue-50 dark:shadow-gray-900">
+                <button
+                  type="button"
+                  onClick={handleClickDownload}
+                  className={clsx([
+                    "download-button leading-none py-2 w-full flex items-center justify-center h-12 px-4 rounded appearance-none transition-all  text-white font-bold",
+                    croppedImageURL
+                      ? "bg-blue-500 hover:bg-blue-600"
+                      : "pointer-events-none user-select-none bg-gray-300 dark:bg-gray-800 cursor-not-allowed",
+                  ])}
+                >
+                  <DownloadIcon />
+                  <span className="inline-block ml-1">Download</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
+        {/*
+          <div className="text-xs flex justify-between items-center">
+            <div className="font-bold flex gap-1 items-center justify-start">
+              <CogIcon className="w-3 h-3" />
+              切り抜きオプション
+              </div>
+            <label className="flex gap-1">
+              <input type="checkbox" />
+              <span>拡大画像をクロップ</span>
+            </label>
+          </div>
+         */}
       </div>
 
       <section className="flex flex-col gap-4">
