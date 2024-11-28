@@ -320,7 +320,7 @@ const App: React.FC = () => {
             まとまった画像が必要な場合は、ひと通り切り抜いてからダウンロードすると便利です。再読み込みでクリアされます。
           </p>
         </div>
-        <ul className="mx-4 flex gap-4 flex-nowrap">
+        <ul className="mx-4 lg:mx-2 flex gap-4 flex-wrap">
           {generatedImageURLs.map((url) => (
             <li key={url} className="generated-image shadow-xl">
               {/* biome-ignore lint/a11y/useValidAnchor: <explanation> */}
