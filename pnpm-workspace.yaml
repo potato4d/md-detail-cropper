@@ -1,3 +1,4 @@
 allowBuilds:
   protobufjs: false
+  re2: set this to true or false
 minimumReleaseAge: 4320
