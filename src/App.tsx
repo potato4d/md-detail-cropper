@@ -12,6 +12,24 @@ import {
 } from "./FeatherIcons";
 import { Logo } from "./Logo";
 
+const OCR_REGION = {
+  left: 0.06,
+  top: 0.04,
+  width: 0.75,
+  height: 0.065,
+} as const;
+
+const OCR_SESSION_OPTIONS = {
+  expectedInputs: [{ type: "text", languages: ["en"] }, { type: "image" }],
+  expectedOutputs: [{ type: "text", languages: ["ja", "en"] }],
+} satisfies LanguageModelCreateCoreOptions;
+
+const OCR_SYSTEM_PROMPT =
+  "You extract card names from cropped game screenshots. Return only the visible card name text suitable for a filename. Do not add explanations. If no readable title is visible, return an empty string.";
+
+const OCR_USER_PROMPT =
+  "Read the text in this narrow title image. Return only the exact card name. If there are multiple lines, use spaces. Do not include file extensions, quotes, labels, or explanations.";
+
 function drawRoundedRect(
   context: CanvasRenderingContext2D,
   x: number,
@@ -37,6 +55,114 @@ function drawRoundedRect(
   context.quadraticCurveTo(x, y, x + radius, y);
   context.closePath();
   context.clip();
+}
+
+function createFallbackFileName(index?: number) {
+  const suffix = typeof index === "number" ? `_${index + 1}` : "";
+  return `cropped_${dayjs().format("YYYYMMDD_HHmmss")}${suffix}.png`;
+}
+
+function replaceControlCharacters(value: string) {
+  return Array.from(value, (char) => {
+    const codePoint = char.codePointAt(0) ?? 0;
+    return codePoint <= 0x1f || codePoint === 0x7f ? " " : char;
+  }).join("");
+}
+
+function sanitizeGeneratedFileName(rawName: string): string | null {
+  let fileName = replaceControlCharacters(rawName)
+    .replace(/```(?:\w+)?/g, "")
+    .replace(/```/g, "")
+    .replace(/\r?\n+/g, " ")
+    .replace(/^(card name|file ?name|name|text|カード名|ファイル名)\s*[:：]\s*/i, "")
+    .replace(/\.(png|jpe?g|webp)$/i, "")
+    .replace(/[\\/:*?"<>|]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^[."'`「『]+|[."'`」』]+$/g, "")
+    .replace(/[. ]+$/g, "");
+
+  if (fileName.length > 80) {
+    fileName = fileName.slice(0, 80).trim().replace(/[. ]+$/g, "");
+  }
+
+  return fileName ? `${fileName}.png` : null;
+}
+
+async function loadImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Failed to load cropped image."));
+    image.src = url;
+  });
+}
+
+async function createOcrCanvas(croppedImageUrl: string): Promise<HTMLCanvasElement> {
+  const image = await loadImage(croppedImageUrl);
+  const sourceWidth = image.naturalWidth || image.width;
+  const sourceHeight = image.naturalHeight || image.height;
+  const cropLeft = Math.round(sourceWidth * OCR_REGION.left);
+  const cropTop = Math.round(sourceHeight * OCR_REGION.top);
+  const cropWidth = Math.max(1, Math.round(sourceWidth * OCR_REGION.width));
+  const cropHeight = Math.max(1, Math.round(sourceHeight * OCR_REGION.height));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = cropWidth;
+  canvas.height = cropHeight;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Failed to create OCR canvas context.");
+  }
+
+  context.drawImage(
+    image,
+    cropLeft,
+    cropTop,
+    cropWidth,
+    cropHeight,
+    0,
+    0,
+    cropWidth,
+    cropHeight,
+  );
+
+  return canvas;
+}
+
+async function generateFileNameWithBuiltInAi(
+  croppedImageUrl: string,
+): Promise<string | null> {
+  if (typeof LanguageModel === "undefined") {
+    return null;
+  }
+
+  const availability = await LanguageModel.availability(OCR_SESSION_OPTIONS);
+  if (availability === "unavailable") {
+    return null;
+  }
+
+  const ocrCanvas = await createOcrCanvas(croppedImageUrl);
+  const session = await LanguageModel.create({
+    ...OCR_SESSION_OPTIONS,
+    initialPrompts: [{ role: "system", content: OCR_SYSTEM_PROMPT }],
+  });
+
+  try {
+    const response = await session.prompt([
+      {
+        role: "user",
+        content: [
+          { type: "text", value: OCR_USER_PROMPT },
+          { type: "image", value: ocrCanvas },
+        ],
+      },
+    ]);
+    return sanitizeGeneratedFileName(response);
+  } finally {
+    session.destroy();
+  }
 }
 
 async function cropImage(image: HTMLImageElement, isLargeImage: boolean): Promise<string> {
@@ -126,7 +252,28 @@ const App: React.FC = () => {
   const [fullImageUrl, setFullImageUrl] = useState<string>("");
   const [croppedImageURL, setCroppedImageURL] = useState<string>("");
   const [generatedImageURLs, setGeneratedImageURLs] = useState<string[]>([]);
+  const [generatedFileNames, setGeneratedFileNames] = useState<Record<string, string>>({});
   const [isLargeImage, setIsLargeImage] = useState<boolean>(false);
+
+  const startFileNameGeneration = useCallback((url: string) => {
+    void generateFileNameWithBuiltInAi(url)
+      .then((fileName) => {
+        if (!fileName) {
+          return;
+        }
+        setGeneratedFileNames((prev) => ({ ...prev, [url]: fileName }));
+      })
+      .catch(() => {
+        // Keep the existing timestamp-based filename when Built-In AI is unavailable.
+      });
+  }, []);
+
+  const getDownloadFileName = useCallback(
+    (url: string, index?: number) => {
+      return generatedFileNames[url] ?? createFallbackFileName(index);
+    },
+    [generatedFileNames],
+  );
 
   useEffect(() => {
     async function onPaste(event: ClipboardEvent) {
@@ -150,6 +297,7 @@ const App: React.FC = () => {
         image.src = url;
         setFullImageUrl(image.src);
         const croppedUrl = await cropImage(image, isLargeImage);
+        startFileNameGeneration(croppedUrl);
         return croppedUrl;
       }));
       setCroppedImageURL(result[result.length - 1] as string);
@@ -159,7 +307,7 @@ const App: React.FC = () => {
     return () => {
       document.removeEventListener('paste', onPaste);
     }
-  }, [isLargeImage]);
+  }, [isLargeImage, startFileNameGeneration]);
 
   const handleChangeFile = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -178,37 +326,41 @@ const App: React.FC = () => {
           image.src = URL.createObjectURL(file);
           setFullImageUrl(image.src);
           cropImage(image, isLargeImage)
-            .then((url) => resolve(url))
+            .then((url) => {
+              startFileNameGeneration(url);
+              resolve(url);
+            })
         })
       }));
       setCroppedImageURL(result[result.length - 1] as string);
       setGeneratedImageURLs((prev) => [...result, ...prev]);
     },
-    [isLargeImage],
+    [isLargeImage, startFileNameGeneration],
   );
 
   const handleClickDownload = useCallback(() => {
     const anchor = document.createElement("a");
     anchor.href = croppedImageURL;
-    anchor.download = `cropped_${dayjs().format("YYYYMMDD_HHmmss")}.png`;
+    anchor.download = getDownloadFileName(croppedImageURL);
     anchor.click();
-  }, [croppedImageURL]);
+  }, [croppedImageURL, getDownloadFileName]);
 
   const handleClickDownloadAll = useCallback(() => {
     generatedImageURLs.forEach((url: string, i) => {
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = `cropped_${dayjs().format("YYYYMMDD_HHmmss")}_${i + 1}.png`;
+      anchor.download = getDownloadFileName(url, i);
       anchor.click();
     });
-  }, [generatedImageURLs]);
+  }, [generatedImageURLs, getDownloadFileName]);
 
   const handleClickGeneratedImageDownload = useCallback((e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
     e.preventDefault();
+    const imageUrl = e.currentTarget.dataset.imageUrl || e.currentTarget.href;
     const anchor = e.currentTarget.cloneNode(true) as HTMLAnchorElement;
-    anchor.download = `cropped_${dayjs().format("YYYYMMDD_HHmmss")}.png`;
+    anchor.download = getDownloadFileName(imageUrl);
     anchor.click();
-  }, []);
+  }, [getDownloadFileName]);
 
   return (
     <div className="container max-w-screen-md mx-auto py-8 flex flex-col gap-6">
@@ -358,6 +510,7 @@ const App: React.FC = () => {
                 className="w-20 h-[116px] relative block leading-none rounded-sm overflow-hidden"
                 href={url}
                 target="_blank"
+                data-image-url={url}
                 onClick={handleClickGeneratedImageDownload}
               >
                 <img src={url} className="rounded-sm overflow-hidden" alt="" />
