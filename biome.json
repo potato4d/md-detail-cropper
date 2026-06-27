@@ -1,16 +1,19 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.4.1/schema.json",
-  "organizeImports": {
-    "enabled": true
-  },
+  "$schema": "https://biomejs.dev/schemas/2.5.1/schema.json",
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "formatter": {
     "indentWidth": 2,
     "indentStyle": "space"
   },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "complexity": {
         "noForEach": "off"
       },
@@ -20,12 +23,12 @@
       "a11y": {
         "noSvgWithoutTitle": "off",
         "useKeyWithClickEvents": "off",
-        "useKeyWithMouseEvents": "off",
+        "useKeyWithMouseEvents": "off"
+      },
+      "security": {
         "noBlankTarget": "off"
       }
     },
-    "ignore": [
-      "src/Logo.tsx"
-    ]
+    "includes": ["**", "!**/src/Logo.tsx"]
   }
 }

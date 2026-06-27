@@ -251,7 +251,7 @@ const App: React.FC = () => {
               type="file"
               multiple={true}
               className="absolute left-0 top-0 w-full h-full opacity-0 z-20 cursor-pointer"
-              onInput={handleChangeFile}
+              onChange={handleChangeFile}
             />
             {
               <div className="w-full md:w-[576px] h-[56.25vw] md:h-[324px] relative z-10 transition-all duration-300 ease-out shadow-md shadow-blue-50 dark:shadow-gray-900">
