@@ -9,7 +9,7 @@ import {
   InfoIcon,
   MoonIcon,
   SunIcon,
-} from "./FeatherIcons";
+} from "./LucideIcons";
 import { Logo } from "./Logo";
 
 const OCR_REGION = {
