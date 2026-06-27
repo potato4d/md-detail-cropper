@@ -1,30 +1,44 @@
-# React + TypeScript + Vite
+# MDCardCropper
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+マスターデュエルのカード詳細画面のスクリーンショットから、カード画像を切り抜くための Web ツールです。
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- スクリーンショットを選択してカード画像を切り抜き
+- クリップボードから貼り付けた画像の切り抜き
+- 複数画像のクロップ履歴とまとめてダウンロード
+- Steam 版の拡大画像向けクロップオプション
+- Chrome Built-in AI によるカード名の自動判別とダウンロードファイル名の自動生成
 
-## Expanding the ESLint configuration
+## カード名の自動判別
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+画像の切り抜きが完了すると、切り抜き画像内のカード名領域を再度切り抜き、Chrome Built-in AI の Prompt API に OCR を依頼します。判別が完了した画像は、以後のダウンロード時にカード名ベースのファイル名を使います。
 
-- Configure the top-level `parserOptions` property like this:
+Chrome Built-in AI が利用できない環境や、判別が完了する前にダウンロードした場合は、従来どおり `cropped_YYYYMMDD_HHmmss.png` 形式のファイル名になります。
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+Prompt API の対応状況や有効化方法は Chrome for Developers のドキュメントを参照してください。
+
+- https://developer.chrome.com/docs/ai/prompt-api
+
+## Supported Screenshots
+
+現状正式サポートは Steam 版およびスマートフォン版のスクリーンショットです。うまく切り抜けない場合は、スクリーンショットを添えて作者まで連絡してください。
+
+## Development
+
+このリポジトリは pnpm を使用します。
+
+```sh
+pnpm install
+pnpm run dev
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+### Commands
+
+```sh
+pnpm run dev      # 開発サーバーを起動
+pnpm run build    # TypeScript と Vite の本番ビルド
+pnpm run lint     # ESLint
+pnpm run format   # Biome で src をフォーマット
+pnpm run preview  # ビルド済みアプリをプレビュー
+```
