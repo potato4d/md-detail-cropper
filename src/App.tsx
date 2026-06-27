@@ -246,9 +246,11 @@ async function cropImage(image: HTMLImageElement, isLargeImage: boolean): Promis
 }
 
 const App: React.FC = () => {
-  const [colorScheme, setColorScheme] = useState<"light" | "dark">(
-    (localStorage.getItem("theme") as "light" | "dark" | null) || "light",
-  );
+  const [colorScheme, setColorScheme] = useState<"light" | "dark">(() => {
+    const saved = localStorage.getItem("theme") as "light" | "dark" | null;
+    if (saved) return saved;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
   const [fullImageUrl, setFullImageUrl] = useState<string>("");
   const [croppedImageURL, setCroppedImageURL] = useState<string>("");
   const [generatedImageURLs, setGeneratedImageURLs] = useState<string[]>([]);
