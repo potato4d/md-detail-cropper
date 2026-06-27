@@ -588,6 +588,7 @@ const App: React.FC = () => {
           </h2>
         </summary>
         <ul className="list-disc list-inside flex flex-col gap-2">
+          <li>2026/06/27: カード名自動判別機能を追加しました。</li>
           <li>2024/10/28: スマートフォンにもデザインを最適化しました。</li>
           <li>2024/10/12: クリップボードからの貼り付けに対応しました。</li>
           <li>2024/02/15: 複数画像のまとめてのクロップに対応しました。</li>
