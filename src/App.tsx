@@ -30,6 +30,72 @@ const OCR_SYSTEM_PROMPT =
 const OCR_USER_PROMPT =
   "Read the text in this narrow title image. Return only the exact card name. If there are multiple lines, use spaces. Do not include file extensions, quotes, labels, or explanations.";
 
+let ocrAvailabilityPromise: Promise<Availability | null> | null = null;
+let ocrBaseSessionPromise: Promise<LanguageModel | null> | null = null;
+
+function getOcrAvailability(): Promise<Availability | null> {
+  if (ocrAvailabilityPromise) {
+    return ocrAvailabilityPromise;
+  }
+
+  if (typeof LanguageModel === "undefined") {
+    ocrAvailabilityPromise = Promise.resolve(null);
+    return ocrAvailabilityPromise;
+  }
+
+  ocrAvailabilityPromise = LanguageModel.availability(
+    OCR_SESSION_OPTIONS,
+  ).catch((error: unknown) => {
+    ocrAvailabilityPromise = null;
+    throw error;
+  });
+
+  return ocrAvailabilityPromise;
+}
+
+function getOcrBaseSession(): Promise<LanguageModel | null> {
+  if (ocrBaseSessionPromise) {
+    return ocrBaseSessionPromise;
+  }
+
+  ocrBaseSessionPromise = (async () => {
+    const availability = await getOcrAvailability();
+    if (!availability || availability === "unavailable") {
+      return null;
+    }
+
+    return LanguageModel.create({
+      ...OCR_SESSION_OPTIONS,
+      initialPrompts: [{ role: "system", content: OCR_SYSTEM_PROMPT }],
+    });
+  })().catch((error: unknown) => {
+    // A model download may require user activation. Allow the next interaction
+    // to retry instead of permanently caching that initialization failure.
+    ocrBaseSessionPromise = null;
+    throw error;
+  });
+
+  return ocrBaseSessionPromise;
+}
+
+function warmUpBuiltInAi(canStartDownload = false) {
+  void getOcrAvailability()
+    .then((availability) => {
+      if (
+        !availability ||
+        availability === "unavailable" ||
+        (availability !== "available" && !canStartDownload)
+      ) {
+        return null;
+      }
+
+      return getOcrBaseSession();
+    })
+    .catch(() => {
+      // Retry on the next user interaction if initialization is not allowed yet.
+    });
+}
+
 function drawRoundedRect(
   context: CanvasRenderingContext2D,
   x: number,
@@ -134,20 +200,13 @@ async function createOcrCanvas(croppedImageUrl: string): Promise<HTMLCanvasEleme
 async function generateFileNameWithBuiltInAi(
   croppedImageUrl: string,
 ): Promise<string | null> {
-  if (typeof LanguageModel === "undefined") {
+  const [ocrCanvas, session] = await Promise.all([
+    createOcrCanvas(croppedImageUrl),
+    getOcrBaseSession().then((baseSession) => baseSession?.clone() ?? null),
+  ]);
+  if (!session) {
     return null;
   }
-
-  const availability = await LanguageModel.availability(OCR_SESSION_OPTIONS);
-  if (availability === "unavailable") {
-    return null;
-  }
-
-  const ocrCanvas = await createOcrCanvas(croppedImageUrl);
-  const session = await LanguageModel.create({
-    ...OCR_SESSION_OPTIONS,
-    initialPrompts: [{ role: "system", content: OCR_SYSTEM_PROMPT }],
-  });
 
   try {
     const response = await session.prompt([
@@ -164,6 +223,10 @@ async function generateFileNameWithBuiltInAi(
     session.destroy();
   }
 }
+
+// Start loading the model and preparing the reusable base session as soon as
+// this module is evaluated. This stays in the background and never blocks UI.
+warmUpBuiltInAi();
 
 async function cropImage(image: HTMLImageElement, isLargeImage: boolean): Promise<string> {
   return new Promise((resolve) => {
@@ -256,6 +319,24 @@ const App: React.FC = () => {
   const [generatedImageURLs, setGeneratedImageURLs] = useState<string[]>([]);
   const [generatedFileNames, setGeneratedFileNames] = useState<Record<string, string>>({});
   const [isLargeImage, setIsLargeImage] = useState<boolean>(false);
+
+  useEffect(() => {
+    const retryWarmUp = () => {
+      warmUpBuiltInAi(true);
+    };
+
+    // A first-time model download may only start during user activation. These
+    // cover mouse, touch/pen, and keyboard activation before crop handling.
+    window.addEventListener("mousedown", retryWarmUp, { capture: true });
+    window.addEventListener("pointerup", retryWarmUp, { capture: true });
+    window.addEventListener("keydown", retryWarmUp, { capture: true });
+
+    return () => {
+      window.removeEventListener("mousedown", retryWarmUp, { capture: true });
+      window.removeEventListener("pointerup", retryWarmUp, { capture: true });
+      window.removeEventListener("keydown", retryWarmUp, { capture: true });
+    };
+  }, []);
 
   const startFileNameGeneration = useCallback((url: string) => {
     void generateFileNameWithBuiltInAi(url)
